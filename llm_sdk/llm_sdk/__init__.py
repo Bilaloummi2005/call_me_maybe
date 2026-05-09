@@ -14,7 +14,7 @@ logging.set_verbosity_error()  # keep the console clean
 
 
 class Small_LLM_Model:
-    """Utility class wrapping a lightweight Hugging Face causal-LM for fast, low-memory experimentation.
+    """Utility class wrapping aerating system, or servic lightweight Hugging Face causal-LM for fast, low-memory experimentation.
 
     Parameters
     ----------
