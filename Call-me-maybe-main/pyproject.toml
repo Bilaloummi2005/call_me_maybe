@@ -1,0 +1,35 @@
+[tool.mypy]
+warn_return_any = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["llm_sdk.*"]
+follow_imports = "skip"
+ignore_errors = true
+
+[project]
+name = "call-me-maybe"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "flake8>=7.3.0",
+    "huggingface-hub>=1.4.1",
+    "mypy>=1.19.1",
+    "numpy==1.26.4",
+    "pydantic>=2.12.5",
+    "torch>=2.10.0",
+    "transformers>=5.2.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
