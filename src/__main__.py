@@ -1,5 +1,30 @@
 from llm_sdk.llm_sdk import Small_LLM_Model
 import json
+import sys
+
+
+class Function:
+    def __init__(self, name, description, parameters, returns):
+        self.name = name
+        self.description = description
+        self.parameters = parameters
+        self.returns = returns
+
+    def get_parameters(self):
+        keys = {key for key in self.parameters.keys()}
+        return keys
+    
+    def func_def(self):
+        return self.name + ":" + self.description + self.parameters
+
+
+with open(sys.argv[1]) as f:
+    data = json.load(f)
+fun = []
+for f in data:
+    function = Function(f["name"], f["description"], f["parameters"], f["returns"])
+    fun.append(function)
+print()
 
 state = 0
 json_guid = ['{', '"', 'prompt', '"', ":", '"', "x", '"',",", '"', "name", '"', ":"
@@ -47,11 +72,12 @@ ids = llm.encode(prompt)
 ids_list = ids.tolist()[0]
 promt_ids = llm.encode(p).tolist()[0]
 print(ids_list)
-# vocab_path = llm.get_path_to_vocab_file()
-# with open(vocab_path, encoding="utf-8") as f:
-#     json_vocab, _ = json.JSONDecoder().raw_decode(f.read())
+vocab_path = llm.get_path_to_vocab_file()
+with open(sys.argv[1]) as f:
+    data = json.load(f)
+ 
 
-# print(json_vocab)
+print(data)
 
 def get_fn_name(ids_list, fn_name=["fn_add_numbers", "fn_greet"]):
     fn_name = {
@@ -76,6 +102,9 @@ def get_fn_name(ids_list, fn_name=["fn_add_numbers", "fn_greet"]):
 
 def get_parames(ids_list, n_parames):
     allowed_ids = set(llm.encode(p).tolist()[0])
+    print("allowed ids are", allowed_ids)
+    
+    
     
 
 while state < len(json_guid):
