@@ -1,5 +1,13 @@
-import gensim.downloader
 
-model = gensim.downloader.load("glove-wiki-gigaword-50")
+parameters = { 
+      "a": {
+        "type": "number"  
+      },
+      "b": {
+        "type": "number"
+      }
+    }
 
-print(model["tower"])
+for key, value in parameters.items():
+    print(key)
+    print(value.items())
