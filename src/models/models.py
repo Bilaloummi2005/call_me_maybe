@@ -16,6 +16,12 @@ class FunctionDef(BaseModel):
     def param_type(self, param_name: str) -> str:
         return self.parameters[param_name].type
 
+    def fun_description(self):
+        output = self.name + " : "
+        for key, value in self.parameters.items():
+            output += key + f"{{{value}}}, "
+        return output[:-1] + '\n'
+
 class TestPrompt(BaseModel):
     prompt: str
 

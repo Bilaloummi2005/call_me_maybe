@@ -20,20 +20,22 @@ def main():
     
     
     funcs = {}
-    print(content_raw)
+    function_description = ""
     for fun in content:
         f = FunctionDef.model_validate(fun)
+        function_description += f.fun_description()
         funcs[f.name] = f
-    p = "Replace all vowels in 'Programming is fun' with asterisks"
+    # function_description += funcs["fn_substitute_string_with_regex"].fun_description()
+    p = "Replace all 'vowels' in 'Programming is fun' with asterisks"
     prompt = f"""
-    Return JSON with:
-    prompt, fn_name, args.
+Return JSON with:
+prompt, fn_name, args.
 
-    Functions:
-    {content_raw}
-    User: {p}
-    JSON:
-    """
+Functions:
+{function_description}
+User: {p}
+JSON:
+"""
     ids = llm.encode(prompt).tolist()[0]
     decode = Decoder(llm, ids, funcs)
     functions_name = [f for f in funcs.keys()]
