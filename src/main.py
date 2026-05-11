@@ -26,7 +26,7 @@ def main():
         function_description += f.fun_description()
         funcs[f.name] = f
     # function_description += funcs["fn_substitute_string_with_regex"].fun_description()
-    p = "Replace all 'vowels' in 'Programming is fun' with asterisks"
+    p = "Replace all vowels in 'Programming is fun' with asterisks"
     prompt = f"""
 Return JSON with:
 prompt, fn_name, args.

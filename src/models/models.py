@@ -19,8 +19,8 @@ class FunctionDef(BaseModel):
     def fun_description(self):
         output = self.name + " : "
         for key, value in self.parameters.items():
-            output += key + f"{{{value}}}, "
-        return output[:-1] + '\n'
+            output += key + f": {{{value}}}, "
+        return output[:-2] + '\n'
 
 class TestPrompt(BaseModel):
     prompt: str
