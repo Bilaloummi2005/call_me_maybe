@@ -53,7 +53,7 @@ class Decoder:
             end_id = self.llm.encode('"').tolist()[0]
             prompt_ids = self.llm.encode(prompt).tolist()[0] if prompt else []
             self._force('"')
-            max_tokens = 5  # add a guard
+            max_tokens = 100 # add a guard
             counter = 0
             while counter < max_tokens:
                 next_id = self._constrain(prompt_ids + end_id)
