@@ -46,6 +46,7 @@ class Decoder:
                 valid_ids = number_ids + dot_id + sep_id
                 next_id = self._constrain(valid_ids)
                 self.ids.append(next_id)
+                print(self.llm.decode(self.ids))
                 if next_id in sep_id:
                     return
         if type == "string":
@@ -55,7 +56,9 @@ class Decoder:
             while True:
                 next_id = self._constrain(prompt_ids + end_id)
                 self.ids.append(next_id)
+                print(self.llm.decode(self.ids))
                 if next_id in end_id:
+                    self._force(sep)
                     return
 
     def decode(self, prompt, functions):

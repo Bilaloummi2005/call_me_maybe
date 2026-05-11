@@ -17,19 +17,20 @@ def main():
     content = None
     with open(sys.argv[1]) as f:
         content = json.load(f)
-    print(content)
+    
+    
     funcs = {}
+    print(content_raw)
     for fun in content:
         f = FunctionDef.model_validate(fun)
         funcs[f.name] = f
-    print(funcs)
     p = "Replace all vowels in 'Programming is fun' with asterisks"
     prompt = f"""
     Return JSON with:
     prompt, fn_name, args.
 
     Functions:
-    {content}
+    {content_raw}
     User: {p}
     JSON:
     """
