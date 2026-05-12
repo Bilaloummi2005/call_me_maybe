@@ -4,6 +4,7 @@ from . import Small_LLM_Model
 import sys
 import json
 from .decoder import Decoder
+import json_repair
 
 
 class JsonGenerater:
@@ -53,10 +54,10 @@ JSON:
             decode.decode(p, self.functions_name)
             output = self.llm.decode(ids)
             print(output[len(prompt):])
-            json_output.append(json.loads(output[len(prompt):]))
+            json_output.append(FunctionCall.model_validate(json_repair.loads(output[len(prompt):])))
         print(json_output)
         with open("output.json", "w") as f:
-            json.dump(json_output,f,indent=4)
+            json.dump(json_output, f, indent=4)
 
 
 def main():
