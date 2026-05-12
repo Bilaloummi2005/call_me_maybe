@@ -19,8 +19,10 @@ class JsonGenerater:
         with open(prompt_path) as f:
             content = json.load(f)
         for prompt in content:
+            print("prompt: ", prompts)
             p = TestPrompt.model_validate(prompt)
-            prompt.append(p)
+            print("p:", p.prompt)
+            prompts.append(p.prompt)
         return prompts
 
     def get_funcs(self, fun_def_path):
@@ -38,17 +40,18 @@ class JsonGenerater:
     def generate(self):
         for p in self.prompts:
             prompt = f"""
-                Return JSON with:
-                prompt, fn_name, args.
+Return JSON with:
+prompt, fn_name, args.
 
-                Functions:
-                {self.funcs_description}
-                User: {p}
-                JSON:
-            """
+Functions:
+{self.funcs_description}
+User: {p}
+JSON:
+"""
             ids = self.llm.encode(prompt).tolist()[0]
             decode = Decoder(self.llm, ids, self.funcs)
             decode.decode(p, self.functions_name)
+            output = self.llm.decode(ids)
             print(output)
 
 
