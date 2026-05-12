@@ -52,14 +52,17 @@ JSON:
             decode = Decoder(self.llm, ids, self.funcs)
             decode.decode(p, self.functions_name)
             output = self.llm.decode(ids)
-            json_output.append(FunctionCall.model_validate(json.loads(output[len(prompt):])))
+            print(output[len(prompt):])
+            json_output.append(json.loads(output[len(prompt):]))
         print(json_output)
+        with open("output.json", "w") as f:
+            json.dump(json_output,f,indent=4)
 
 
 def main():
-    test = '{"prompt":"Calculate the square root of 144","name":"fn_get_square_root","parameters":{"a":144}}'
+    test = '{"prompt":"Replace all numbers in "Hello 34 I\'m 233 years old" with NUMBERS","name":"fn_substitute_string_with_regex","parameters":{"source_string":"Hello 34 I\'m 233 years old","regex":"\\d+","replacement":" NUMBERS "}}'
     
-    print(FunctionCall.model_validate(json.loads(test)))
+    print(json.loads(test))
     # exit()
 
     gen = JsonGenerater(sys.argv[1], sys.argv[2])
