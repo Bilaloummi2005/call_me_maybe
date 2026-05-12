@@ -14,7 +14,8 @@ class Decoder:
 
     def _constrain(self, valid_ids):
         logits = self.llm.get_logits_from_input_ids(self.ids)
-        logits = [l if i in valid_ids else float("-inf") for i, l in enumerate(logits)]
+        if valid_ids != "all":
+            logits = [l if i in valid_ids else float("-inf") for i, l in enumerate(logits)]
         return logits.index(max(logits))
 
     def _get_function_name(self, functions):
@@ -34,7 +35,7 @@ class Decoder:
                 return key
             i += 1
 
-    def _get_value(self, type, sep, prompt=None):
+    def _get_value(self, type, sep, prompt, is_regex=False):
         if type == "number":
             number_ids = self.llm.encode("0123456789").tolist()[0]
             minus_id = self.llm.encode("-").tolist()[0]
@@ -51,20 +52,24 @@ class Decoder:
                     return
         if type == "string":
             end_id = self.llm.encode('"').tolist()[0]
-            prompt_ids = self.llm.encode(prompt).tolist()[0] if prompt else []
+            if is_regex:
+                allowed_ids = "all"
+            else:
+                allowed_ids = self.llm.encode(prompt).tolist()[0] if prompt else [] + end_id
             self._force('"')
-            max_tokens = 100 # add a guard
+            # max_tokens = 10 # add a guard
             counter = 0
-            while counter < max_tokens:
-                next_id = self._constrain(prompt_ids + end_id)
+            while True:
+                next_id = self._constrain(allowed_ids)
                 self.ids.append(next_id)
-                # print(self.llm.decode(self.ids))
+                print(self.llm.decode(self.ids[50:]), "end_ids ids are ", end_id, "next_id", next_id)
                 if next_id in end_id:
                     self._force(sep)
                     return
+                allowed_ids.remove(next_id)
                 counter += 1
-            self._force('"')
-            self._force(sep)
+            # self._force('"')
+            # self._force(sep)
 
     def decode(self, prompt, functions):
         self._force('{"prompt":"')
@@ -76,5 +81,5 @@ class Decoder:
         for i, param in enumerate(params):
             self._force(f'"{param}":')
             sep = "}" if i == len(params) - 1 else ","
-            self._get_value(params[param].type, sep, prompt)
+            self._get_value(params[param].type, sep, prompt, param == "regex")
         self._force('}')
