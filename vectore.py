@@ -1,13 +1,4 @@
+ids = [1,3,6,9,4,2,7]
 
-parameters = { 
-      "a": {
-        "type": "number"  
-      },
-      "b": {
-        "type": "number"
-      }
-    }
-
-for key, value in parameters.items():
-    print(key)
-    print(value.items())
+print(ids.remove(6))
+print(ids)

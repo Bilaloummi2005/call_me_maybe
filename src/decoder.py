@@ -62,11 +62,12 @@ class Decoder:
             while True:
                 next_id = self._constrain(allowed_ids)
                 self.ids.append(next_id)
-                print(self.llm.decode(self.ids[50:]), "end_ids ids are ", end_id, "next_id", next_id)
-                if next_id in end_id:
+                print(self.llm.decode(self.ids[60:]), "|end_ids ids are ", end_id, "next_id", next_id, self.llm.decode([next_id]))
+                if '"' in self.llm.decode([next_id]):
                     self._force(sep)
                     return
-                allowed_ids.remove(next_id)
+                if not is_regex:
+                    allowed_ids.remove(next_id)
                 counter += 1
             # self._force('"')
             # self._force(sep)
