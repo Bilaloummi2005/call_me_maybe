@@ -54,7 +54,8 @@ JSON:
             decode.decode(p, self.functions_name)
             output = self.llm.decode(ids)
             print(output[len(prompt):])
-            json_output.append(FunctionCall.model_validate(json_repair.loads(output[len(prompt):])))
+            FunctionCall.model_validate(json_repair.loads(output[len(prompt):]))
+            json_output.append(json_repair.loads(output[len(prompt):]))
         print(json_output)
         with open("output.json", "w") as f:
             json.dump(json_output, f, indent=4)
