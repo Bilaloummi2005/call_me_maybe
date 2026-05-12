@@ -61,8 +61,10 @@ class Decoder:
             counter = 0
             while True:
                 next_id = self._constrain(allowed_ids)
-                self.ids.append(next_id)
                 is_last: str = self.llm.decode([next_id])
+                if is_last == '\\':
+                    self.ids.append(next_id)
+                self.ids.append(next_id)
                 if '"' in is_last:
                     if not is_last.endswith(sep):
                         self._force(sep)

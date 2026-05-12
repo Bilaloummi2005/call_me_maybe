@@ -60,9 +60,9 @@ JSON:
 
 
 def main():
-    test = '{"prompt":"Replace all numbers in "Hello 34 I\'m 233 years old" with NUMBERS","name":"fn_substitute_string_with_regex","parameters":{"source_string":"Hello 34 I\'m 233 years old","regex":"\\d+","replacement":" NUMBERS "}}'
+    # test = '{"prompt":"Replace all numbers in "Hello 34 I\'m 233 years old" with NUMBERS","name":"fn_substitute_string_with_regex","parameters":{"source_string":"Hello 34 I\'m 233 years old","regex":"\\d+","replacement":" NUMBERS "}}'
     
-    print(json.loads(test))
+    # print(json.loads(test))
     # exit()
 
     gen = JsonGenerater(sys.argv[1], sys.argv[2])
