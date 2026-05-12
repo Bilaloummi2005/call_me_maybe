@@ -55,16 +55,17 @@ class Decoder:
             if is_regex:
                 allowed_ids = "all"
             else:
-                allowed_ids = self.llm.encode(prompt).tolist()[0] if prompt else [] + end_id
+                allowed_ids = self.llm.encode(prompt).tolist()[0] if prompt else []
+                allowed_ids.extend(end_id)
             self._force('"')
-            # max_tokens = 10 # add a guard
             counter = 0
             while True:
                 next_id = self._constrain(allowed_ids)
                 self.ids.append(next_id)
-                print(self.llm.decode(self.ids[60:]), "|end_ids ids are ", end_id, "next_id", next_id, self.llm.decode([next_id]))
-                if '"' in self.llm.decode([next_id]):
-                    self._force(sep)
+                is_last: str = self.llm.decode([next_id])
+                if '"' in is_last:
+                    if not is_last.endswith(sep):
+                        self._force(sep)
                     return
                 if not is_regex:
                     allowed_ids.remove(next_id)
