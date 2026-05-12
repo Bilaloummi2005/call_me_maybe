@@ -36,6 +36,7 @@ class JsonGenerater:
         return funcs, funcs_description
 
     def generate(self):
+        json_output = []
         for p in self.prompts:
             prompt = f"""
 Return JSON with:
@@ -51,39 +52,15 @@ JSON:
             decode = Decoder(self.llm, ids, self.funcs)
             decode.decode(p, self.functions_name)
             output = self.llm.decode(ids)
-            print(output)
-
+            json_output.append(FunctionCall.model_validate(json.loads(output[len(prompt):])))
+        print(json_output)
 
 
 def main():
-#     llm = Small_LLM_Model()
-#     content = None
-#     with open(sys.argv[1]) as f:
-#         content = json.load(f)
+    test = '{"prompt":"Calculate the square root of 144","name":"fn_get_square_root","parameters":{"a":144}}'
     
-    
-#     funcs = {}
-#     function_description = ""
-#     for fun in content:
-#         f = FunctionDef.model_validate(fun)
-#         function_description += f.fun_description()
-#         funcs[f.name] = f
-#     # function_description += funcs["fn_substitute_string_with_regex"].fun_description()
-#     p = "Replace all vowels in 'Programming is fun' with asterisks"
-#     prompt = f"""
-# Return JSON with:
-# prompt, fn_name, args.
+    print(FunctionCall.model_validate(json.loads(test)))
+    # exit()
 
-# Functions:
-# {function_description}
-# User: {p}
-# JSON:
-# """
-#     ids = llm.encode(prompt).tolist()[0]
-#     decode = Decoder(llm, ids, funcs)
-#     functions_name = [f for f in funcs.keys()]
-#     decode.decode(p, functions_name)
-#     output = llm.decode(ids)
-#     print(output)
     gen = JsonGenerater(sys.argv[1], sys.argv[2])
     gen.generate()
