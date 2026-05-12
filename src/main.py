@@ -6,11 +6,30 @@ import json
 from .decoder import Decoder
 
 
-# class JsonGenerater:
-#     def __init__(self):
-        
-        
+class JsonGenerater:
+    def __init__(self, fun_def_path, prompt_path):
+        self.llm = Small_LLM_Model()
+        self.funcs, self.funcs_description = self.get_funcs(fun_def_path)
+        self.prompts = self.get_prompts(prompt_path)
 
+    def get_prompts(self, prompt_path):
+        prompt = []
+        with open(prompt_path) as f:
+            content = json.load(f)
+
+    def generate(self):
+        pass
+    def get_funcs(self, fun_def_path):
+        funcs = {}
+        content = []
+        funcs_description = ""
+        with open(fun_def_path) as f:
+            content = json.load(f)
+        for fun in content:
+            f = FunctionDef.model_validate(fun)
+            funcs_description += f.fun_description()
+            funcs[f.name] = f
+        return funcs, funcs_description
 
 def main():
     llm = Small_LLM_Model()
