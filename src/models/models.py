@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Any
+from typing import Any, Optional
 
 class ParameterSchema(BaseModel):
     type: str
@@ -7,7 +7,7 @@ class ParameterSchema(BaseModel):
 class FunctionDef(BaseModel):
     name: str
     description: str
-    parameters: dict[str, ParameterSchema]
+    parameters: Optional[dict[str, ParameterSchema]]
     returns: ParameterSchema
 
     def param_names(self) -> list[str]:

@@ -27,16 +27,12 @@
     {
         "prompt": "Greet shrek",
         "name": "fn_greet",
-        "parameters": {
-            "name": "shrek"
-        }
+        "parameters": {}
     },
     {
         "prompt": "Greet john",
         "name": "fn_greet",
-        "parameters": {
-            "name": "john"
-        }
+        "parameters": {}
     },
     {
         "prompt": "Reverse the string 'hello'",

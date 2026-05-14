@@ -86,4 +86,6 @@ class Decoder:
             self._force(f'"{param}":')
             sep = "}" if i == len(params) - 1 else ","
             self._get_value(params[param].type, sep, prompt)
+        if len(params) == 0:
+            self._force('}')
         self._force('}')
