@@ -57,7 +57,7 @@ JSON:
             FunctionCall.model_validate(json_repair.loads(output[len(prompt):]))
             json_output.append(json_repair.loads(output[len(prompt):]))
         print(json_output)
-        with open("output.json", "w") as f:
+        with open("data/output/function_calling_results.json", "w") as f:
             json.dump(json_output, f, indent=4)
 
 
