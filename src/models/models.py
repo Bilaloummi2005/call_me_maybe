@@ -20,6 +20,8 @@ class FunctionDef(BaseModel):
         output = self.name + "("
         for key, value in self.parameters.items():
             output += key + f": {value.type}, "
+        if len(self.parameters.items()) == 0:
+            output += "gg"
         return output[:-2] + ')\n'
 
 class TestPrompt(BaseModel):
