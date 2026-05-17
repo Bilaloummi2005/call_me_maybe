@@ -37,7 +37,8 @@ class Decoder:
         except (IndexError, AttributeError) as e:
             raise DecoderError(f"Failed to encode '{text}': {e}") from e
         for id in ids_to_add:
-            self.ids.append(id)
+            next_id = self._constrain([id])
+            self.ids.append(next_id)
 
     def _constrain(self, valid_ids: list[int] | Literal["all"]) -> int:
         try:
