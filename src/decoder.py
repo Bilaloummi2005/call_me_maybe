@@ -1,4 +1,6 @@
-from .models import FunctionCall
+from typing import Any, Literal, cast
+
+from .models import FunctionCall, FunctionDef
 
 
 class DecoderError(Exception):
@@ -16,7 +18,7 @@ class FunctionNotFound(DecoderError):
 class Decoder:
     MAX_ITERATIONS = 1000
 
-    def __init__(self, llm, ids, functions):
+    def __init__(self, llm: Any, ids: list[int], functions: dict[str, FunctionDef]) -> None:
         if llm is None:
             raise ValueError("llm cannot be None")
         if ids is None:
@@ -27,7 +29,7 @@ class Decoder:
         self.ids = ids
         self.functions = functions
 
-    def _force(self, text):
+    def _force(self, text: str) -> None:
         if not isinstance(text, str):
             raise ValueError(f"Expected string, got {type(text).__name__}")
         try:
@@ -37,9 +39,9 @@ class Decoder:
         for id in ids_to_add:
             self.ids.append(id)
 
-    def _constrain(self, valid_ids):
+    def _constrain(self, valid_ids: list[int] | Literal["all"]) -> int:
         try:
-            logits = self.llm.get_logits_from_input_ids(self.ids)
+            logits = cast(list[float], self.llm.get_logits_from_input_ids(self.ids))
         except Exception as e:
             raise DecoderError(f"Failed to get logits: {e}") from e
         if not logits:
@@ -51,7 +53,7 @@ class Decoder:
             raise DecoderError("No valid token found: all constrained logits are -inf")
         return logits.index(max_logit)
 
-    def _get_function_name(self, functions):
+    def _get_function_name(self, functions: list[str]) -> str:
         if len(functions) == 0:
             raise FunctionNotFound("No functions provided")
         try:
@@ -81,8 +83,8 @@ class Decoder:
 
         raise DecoderError(f"Function name resolution exceeded {self.MAX_ITERATIONS} iterations")
 
-    def _get_value(self, type, sep):
-        if type == "number" or type == "float":
+    def _get_value(self, value_type: str, sep: str) -> None:
+        if value_type == "number" or value_type == "float":
             try:
                 number_ids = self.llm.encode("0123456789").tolist()[0]
                 minus_id = self.llm.encode("-").tolist()[0]
@@ -92,7 +94,7 @@ class Decoder:
                 raise DecoderError(f"Failed to encode numeric tokens: {e}") from e
             next_id = self._constrain(number_ids + minus_id)
             self.ids.append(next_id)
-            valid_ids = number_ids + dot_id + sep_id if type == "float" else number_ids + sep_id
+            valid_ids = number_ids + dot_id + sep_id if value_type == "float" else number_ids + sep_id
             for _ in range(self.MAX_ITERATIONS):
                 next_id = self._constrain(valid_ids)
                 self.ids.append(next_id)
@@ -100,7 +102,7 @@ class Decoder:
                     return
             raise DecoderError(f"Number decoding exceeded {self.MAX_ITERATIONS} iterations")
 
-        if type == "string":
+        if value_type == "string":
             self._force('"')
             for _ in range(self.MAX_ITERATIONS):
                 next_id = self._constrain("all")
@@ -115,7 +117,7 @@ class Decoder:
                     return
             raise DecoderError(f"String decoding exceeded {self.MAX_ITERATIONS} iterations")
 
-        if type == "boolean":
+        if value_type == "boolean":
             try:
                 number_ids = self.llm.encode("01").tolist()[0]
                 sep_id = self.llm.encode(sep).tolist()[0]
@@ -127,9 +129,9 @@ class Decoder:
             self.ids.append(next_id)
             return
 
-        raise TypeNotFound(f"Unsupported type: '{type}'")
+        raise TypeNotFound(f"Unsupported type: '{value_type}'")
 
-    def decode(self, prompt, functions):
+    def decode(self, prompt: str, functions: list[str]) -> None:
         if not isinstance(prompt, str):
             raise ValueError(f"prompt must be a string, got {type(prompt).__name__}")
         if not functions:
@@ -147,7 +149,7 @@ class Decoder:
             raise FunctionNotFound(f"Decoded function '{f}' is not registered")
 
         self._force('","parameters":{')
-        params = self.functions[f].parameters
+        params = self.functions[f].parameters or {}
         for i, param in enumerate(params):
             self._force(f'"{param}":')
             sep = "}" if i == len(params) - 1 else ","

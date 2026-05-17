@@ -11,12 +11,12 @@ debug:
 		--output data/output/function_calls.json
 
 lint:
-	flake8 src/
 	mypy src/ --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	flake8 src/
 
 lint-strict:
-	flake8 src/
 	mypy src/ --strict
+	flake8 src/
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +

@@ -1,4 +1,7 @@
-from .models import FunctionCall, FunctionDef, ParameterSchema, TestPrompt
+# mypy: allow-untyped-defs
+
+from .models import FunctionCall, FunctionDef, TestPrompt
+from typing import Any
 from . import Small_LLM_Model
 import sys
 import json
@@ -10,7 +13,7 @@ from pydantic import ValidationError
 
 
 class JsonGenerater:
-    def __init__(self):
+    def __init__(self) -> None:
         try:
             self.llm = Small_LLM_Model()
         except Exception as e:
@@ -20,10 +23,10 @@ class JsonGenerater:
         self.functions_name = list(self.funcs.keys())
         self.prompts = self.get_prompts()
 
-    def get_prompts(self):
+    def get_prompts(self) -> list[str]:
         try:
-            with open(self.prompt_path) as f:
-                content = json.load(f)
+            with open(self.prompt_path) as file_obj:
+                content: list[dict[str, Any]] = json.load(file_obj)
         except FileNotFoundError:
             raise FileNotFoundError(f"Prompts file not found: '{self.prompt_path}'")
         except PermissionError:
@@ -31,7 +34,7 @@ class JsonGenerater:
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in '{self.prompt_path}': {e}") from e
 
-        prompts = []
+        prompts: list[str] = []
         for i, prompt in enumerate(content):
             try:
                 p = TestPrompt.model_validate(prompt)
@@ -40,7 +43,7 @@ class JsonGenerater:
                 raise ValueError(f"Invalid prompt at index {i}: {e}") from e
         return prompts
 
-    def parse_arguments(self):
+    def parse_arguments(self) -> tuple[str, str, str]:
         parser = argparse.ArgumentParser(
             description="Function calling system using constrained decoding."
         )
@@ -62,13 +65,13 @@ class JsonGenerater:
             default="data/output/function_calling_results.json",
             help="Path to output JSON file."
         )
-        parser = parser.parse_args()
-        return parser.functions_definition, parser.input, parser.output
+        args = parser.parse_args()
+        return args.functions_definition, args.input, args.output
 
-    def get_funcs(self):
+    def get_funcs(self) -> tuple[dict[str, FunctionDef], str]:
         try:
-            with open(self.fun_def_path) as f:
-                content = json.load(f)
+            with open(self.fun_def_path) as file_obj:
+                content: list[dict[str, Any]] = json.load(file_obj)
         except FileNotFoundError:
             raise FileNotFoundError(f"Functions definition file not found: '{self.fun_def_path}'")
         except PermissionError:
@@ -76,13 +79,13 @@ class JsonGenerater:
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in '{self.fun_def_path}': {e}") from e
 
-        funcs = {}
+        funcs: dict[str, FunctionDef] = {}
         funcs_description = ""
         for i, fun in enumerate(content):
             try:
-                f = FunctionDef.model_validate(fun)
-                funcs_description += f.fun_description()
-                funcs[f.name] = f
+                func_def = FunctionDef.model_validate(fun)
+                funcs_description += func_def.fun_description()
+                funcs[func_def.name] = func_def
             except ValidationError as e:
                 raise ValueError(f"Invalid function definition at index {i}: {e}") from e
 
@@ -91,9 +94,9 @@ class JsonGenerater:
 
         return funcs, funcs_description
 
-    def generate(self):
-        json_output = []
-        errors = []
+    def generate(self) -> None:
+        json_output: list[dict[str, Any]] = []
+        errors: list[str] = []
 
         for i, p in enumerate(self.prompts):
             prompt = f"""
@@ -129,6 +132,11 @@ JSON:
             raw = output[len(prompt):]
             try:
                 parsed = json_repair.loads(raw)
+                if not isinstance(parsed, dict):
+                    errors.append(
+                        f"Prompt {i} ('{p[:40]}'): invalid function call output: not a JSON object"
+                    )
+                    continue
                 FunctionCall.model_validate(parsed)
                 json_output.append(parsed)
             except ValidationError as e:
