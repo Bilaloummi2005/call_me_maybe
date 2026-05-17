@@ -1,0 +1,18 @@
+[
+    {
+        "prompt": "addd 4 on 3",
+        "name": "fn_add_numbers",
+        "parameters": {
+            "a": 4,
+            "b": 3
+        }
+    },
+    {
+        "prompt": "give me the result of those two numbers 444 8?",
+        "name": "fn_add_numbers",
+        "parameters": {
+            "a": 444,
+            "b": 8
+        }
+    }
+]

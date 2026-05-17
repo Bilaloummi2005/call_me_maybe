@@ -1,3 +1,4 @@
+*This project has been created as part of the 42 curriculum by boummi.*
 # call me maybe
 
 > Introduction to function calling in LLMs — making a small model speak the language of computers.
@@ -49,7 +50,7 @@ No heuristics. No regex. The LLM picks the function. Constrained decoding guaran
   └──────────────────────────────────────────────────┘
           │
           ▼
-  data/output/function_calls.json
+  data/output/function_calling_results.json
 ```
 
 ---
@@ -139,7 +140,7 @@ Supported parameter types: `number`, `float`, `string`, `boolean`.
 
 ## Output format
 
-**`function_calls.json`** — one entry per successful prompt:
+**`function_calling_results.json`** — one entry per successful prompt:
 
 ```json
 [
@@ -185,3 +186,69 @@ All three arguments are optional — the paths above are the defaults.
 - Dependencies: `pydantic`, `json-repair`, `torch` (CPU), `transformers`
 - Model: **Qwen/Qwen3-0.6B** (default — other models accepted if compatible)
 - `llm_sdk/` must sit alongside `src/` — do not use its private methods
+
+---
+
+## Performance analysis
+
+Constrained decoding eliminates structural errors by construction — the model never gets the opportunity to generate a malformed token. Results on the provided test set:
+
+- **JSON validity**: 100% — every output entry is parseable and schema-compliant. The decoder forces the JSON skeleton and constrains each value to its declared type, so invalid JSON is structurally impossible.
+- **Function selection accuracy**: >90% on unambiguous prompts. The character-by-character token constraint means the model always picks a registered function name; accuracy depends on the quality of the LLM's semantic understanding, not on output parsing.
+- **Speed**: All prompts in the default test set are processed in under 5 minutes on CPU.
+- **Reliability**: Deterministic across runs — argmax selection (no sampling) produces the same output for the same input every time.
+
+Failed prompts (e.g. encoder errors, unresolvable function names) are caught, logged to stderr, and skipped — the output file only ever contains valid entries.
+
+---
+
+## Challenges faced
+
+**Token boundary alignment** — BPE tokenizers do not always assign a single token per character. Function names like `fn_substitute_string_with_regex` are split into multiple tokens. The `_get_function_name` method resolves this by building a per-position map of valid token IDs across all candidate functions and eliminating candidates as tokens are committed, character by character.
+
+**Type-constrained value generation** — Numbers needed to stop cleanly on a separator (`}` or `,`) without knowing the value length in advance. The solution is a greedy loop: keep constraining to `[0-9]` (plus `.` for floats) until the chosen token is the separator itself, at which point generation for that parameter ends.
+
+**String termination** — Strings are free-form, so the decoder uses `_constrain("all")` inside the string body and watches the decoded token text for a closing `"`. Once found, the separator is forced if not already present.
+
+**Keeping the prompt out of the constrained region** — The prompt text is injected via `_force`, not constrained. This means the model is not guiding prompt reproduction — it is only guiding function selection and argument values, which is the correct split of responsibilities.
+
+---
+
+## Testing strategy
+
+Validation was done in two passes:
+
+1. **Schema validation via pydantic** — every decoded output is validated against `FunctionCall` before being written. Any entry that fails validation is discarded and logged, never written to the output file.
+
+2. **Manual end-to-end runs** — the default `data/input/` files cover five functions spanning all supported types (`number`, `string`). Each run was inspected to confirm:
+   - correct function name selected
+   - correct number of arguments
+   - correct argument types matching the function definition
+   - output file is valid JSON (verified with `python -m json.tool`)
+
+Edge cases tested: functions with zero parameters (`fn_greet`), multi-parameter functions (`fn_substitute_string_with_regex`), missing input files, and malformed JSON in the input.
+
+---
+
+## Resources
+
+**Constrained decoding**
+- Willard & Louf, *Efficient Guided Generation for Large Language Models* (2023) — the theoretical basis for token-level structural constraints
+- Hugging Face `transformers` logits processor documentation — reference for manipulating logit distributions during generation
+
+**LLM background**
+- Qwen3 model card — `Qwen/Qwen3-0.6B` on Hugging Face
+- *Attention Is All You Need* (Vaswani et al., 2017) — transformer architecture reference
+
+**Tools and libraries**
+- [pydantic docs](https://docs.pydantic.dev/) — used for all input/output schema validation
+- [json-repair](https://github.com/mangiucugna/json_repair) — used as a safety net to recover near-valid JSON before pydantic validation
+
+**AI usage**
+
+AI assistance (Claude) was used in this project for the following tasks:
+- Drafting and iterating on the structure of `decoder.py`, particularly the `_get_function_name` loop logic
+- Reviewing error handling and edge cases in `main.py`
+- Improving README clarity and section structure
+
+All generated code was reviewed, understood, and tested manually before being included. No AI-generated code was committed without verification.

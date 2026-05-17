@@ -124,6 +124,7 @@ class Decoder:
             next_id = self._constrain(number_ids)
             self.ids.append(next_id)
             next_id = self._constrain(sep_id)
+            self.ids.append(next_id)
             return
 
         raise TypeNotFound(f"Unsupported type: '{type}'")
