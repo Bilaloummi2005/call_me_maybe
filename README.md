@@ -86,8 +86,7 @@ The model never gets a chance to generate invalid JSON. Structure is guaranteed 
 ## Project layout
 
 ```
-call_me_maybe/
-├── src/
+ ── src/
 │   ├── __main__.py          # entry point
 │   ├── main.py              # JsonGenerater orchestrator
 │   ├── decoder.py           # Decoder — constrained decoding logic
@@ -247,8 +246,6 @@ Edge cases tested: functions with zero parameters (`fn_greet`), multi-parameter 
 **AI usage**
 
 AI assistance (Claude) was used in this project for the following tasks:
-- Drafting and iterating on the structure of `decoder.py`, particularly the `_get_function_name` loop logic
 - Reviewing error handling and edge cases in `main.py`
 - Improving README clarity and section structure
 
-All generated code was reviewed, understood, and tested manually before being included. No AI-generated code was committed without verification.
