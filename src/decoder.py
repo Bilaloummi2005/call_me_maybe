@@ -1,3 +1,4 @@
+import re
 from typing import Any, Literal, cast
 
 from .models import FunctionCall, FunctionDef
@@ -29,16 +30,17 @@ class Decoder:
         self.ids = ids
         self.functions = functions
 
-    def _force(self, text: str) -> None:
+    def _force(self, text: str, escape: bool = False) -> None:
         if not isinstance(text, str):
             raise ValueError(f"Expected string, got {type(text).__name__}")
+        if escape:
+            text = text.replace("\\", "\\\\").replace('"', '\\"')
         try:
             ids_to_add = self.llm.encode(text).tolist()[0]
         except (IndexError, AttributeError) as e:
             raise DecoderError(f"Failed to encode '{text}': {e}") from e
         for id in ids_to_add:
-            next_id = self._constrain([id])
-            self.ids.append(next_id)
+            self.ids.append(id)
 
     def _constrain(self, valid_ids: list[int] | Literal["all"]) -> int:
         try:
@@ -55,12 +57,10 @@ class Decoder:
         return logits.index(max_logit)
 
     def _get_function_name(self, functions: list[str]) -> str:
-        if len(functions) == 0:
+        if not functions:
             raise FunctionNotFound("No functions provided")
         try:
-            functions_ids = {
-                f: self.llm.encode(f).tolist()[0] for f in functions
-            }
+            functions_ids = {f: self.llm.encode(f).tolist()[0] for f in functions}
         except (IndexError, AttributeError) as e:
             raise DecoderError(f"Failed to encode function names: {e}") from e
 
@@ -84,8 +84,13 @@ class Decoder:
 
         raise DecoderError(f"Function name resolution exceeded {self.MAX_ITERATIONS} iterations")
 
-    def _get_value(self, value_type: str, sep: str) -> None:
-        if value_type == "number" or value_type == "float":
+    def _get_value(self, value_type: str, sep: str, prompt: str) -> None:
+        if value_type == "number" or value_type == "float" or value_type == "integer":
+            numbers = re.findall(r'-?\d+\.?\d*', prompt)
+            if numbers:
+                max_digit = max(numbers, key=len) + "00"
+            else:
+                max_digit = "000"
             try:
                 number_ids = self.llm.encode("0123456789").tolist()[0]
                 minus_id = self.llm.encode("-").tolist()[0]
@@ -95,32 +100,49 @@ class Decoder:
                 raise DecoderError(f"Failed to encode numeric tokens: {e}") from e
             next_id = self._constrain(number_ids + minus_id)
             self.ids.append(next_id)
-            valid_ids = number_ids + dot_id + sep_id if value_type == "float" else number_ids + sep_id
-            for _ in range(self.MAX_ITERATIONS):
+            valid_ids = number_ids + dot_id + sep_id if value_type == ("number" or "float") else number_ids + sep_id
+            for _ in max_digit:
                 next_id = self._constrain(valid_ids)
-                self.ids.append(next_id)
                 if next_id in sep_id:
+                    if dot_id[0] in valid_ids:
+                        self._force(".0")
+                    self.ids.append(next_id)
                     return
-            raise DecoderError(f"Number decoding exceeded {self.MAX_ITERATIONS} iterations")
+                if next_id in dot_id:
+                    valid_ids = number_ids + sep_id
+                self.ids.append(next_id)
+            self._force(sep)
+            return
 
         if value_type == "string":
             self._force('"')
+            escaped = False
             for _ in range(self.MAX_ITERATIONS):
                 next_id = self._constrain("all")
                 try:
-                    is_last: str = self.llm.decode([next_id])
+                    token_text: str = self.llm.decode([next_id])
                 except Exception as e:
                     raise DecoderError(f"Failed to decode token {next_id}: {e}") from e
-                self.ids.append(next_id)
-                if '"' in is_last:
-                    if not is_last.endswith(sep):
-                        self._force(sep)
+                close_idx = None
+                for j, ch in enumerate(token_text):
+                    if escaped:
+                        escaped = False
+                        continue
+                    if ch == '\\':
+                        escaped = True
+                    elif ch == '"':
+                        close_idx = j
+                        break
+                if close_idx is not None:
+                    self._force(token_text[:close_idx + 1] + sep)
                     return
+                self.ids.append(next_id)
             raise DecoderError(f"String decoding exceeded {self.MAX_ITERATIONS} iterations")
 
         if value_type == "boolean":
             try:
-                number_ids = self.llm.encode("01").tolist()[0]
+                boolean_ids = self.llm.encode("true").tolist()[0]
+                boolean_ids.extend(self.llm.encode("false").tolist()[0])
                 sep_id = self.llm.encode(sep).tolist()[0]
             except (IndexError, AttributeError) as e:
                 raise DecoderError(f"Failed to encode boolean tokens: {e}") from e
@@ -142,7 +164,7 @@ class Decoder:
             raise FunctionNotFound(f"Functions not registered: {missing}")
 
         self._force('{"prompt":"')
-        self._force(prompt)
+        self._force(prompt, True)
         self._force('","name":"')
         f = self._get_function_name(functions)
 
@@ -157,7 +179,7 @@ class Decoder:
             param_type = getattr(params[param], "type", None)
             if param_type is None:
                 raise DecoderError(f"Parameter '{param}' of function '{f}' has no type defined")
-            self._get_value(param_type, sep)
-        if len(params) == 0:
+            self._get_value(param_type, sep, prompt)
+        if not params:
             self._force("}")
         self._force("}")

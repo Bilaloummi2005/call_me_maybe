@@ -29,7 +29,7 @@ class FunctionDef(BaseModel):
         for key, value in params.items():
             output += key + f": {value.type}, "
         if len(params.items()) == 0:
-            output += "gg"
+            return output + ")"
         return output[:-2] + ')\n'
 
 class TestPrompt(BaseModel):

@@ -8,7 +8,6 @@ import json
 from pathlib import Path
 from .decoder import Decoder, DecoderError
 import argparse
-import json_repair
 from pydantic import ValidationError
 
 
@@ -127,17 +126,18 @@ JSON:
                 errors.append(f"Prompt {i}: failed to decode output: {e}")
                 continue
 
-            print(output)
+            print(output[len(prompt):])
 
             raw = output[len(prompt):]
             try:
-                parsed = json_repair.loads(raw)
+                parsed = json.loads(raw)
                 if not isinstance(parsed, dict):
                     errors.append(
-                        f"Prompt {i} ('{p[:40]}'): invalid function call output: not a JSON object"
+                        f"Prompt {i+1} ('{p[:40]}'): invalid function call output: not a JSON object"
                     )
                     continue
                 FunctionCall.model_validate(parsed)
+                
                 json_output.append(parsed)
             except ValidationError as e:
                 errors.append(f"Prompt {i} ('{p[:40]}'): invalid function call output: {e}")

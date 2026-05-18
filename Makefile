@@ -2,13 +2,10 @@ install:
 	uv sync
 
 run:
-	uv run python -m src 
+	uv run python -m src
 
 debug:
-	uv run python -m pdb -m src \
-		--functions_definition data/input/functions_definition.json \
-		--input data/input/function_calling_tests.json \
-		--output data/output/function_calls.json
+	uv run python -m pdb -m src
 
 lint:
 	mypy src/ --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
