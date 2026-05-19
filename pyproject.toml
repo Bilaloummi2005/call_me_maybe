@@ -5,12 +5,10 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "flake8>=7.3.0",
     "json-repair>=0.59.9",
     "mypy>=2.1.0",
     "pydantic>=2.13.4",
-    "torch",
-    "torchvision",
-    "transformers>=5.8.0",
 ]
 
 [tool.uv.sources]
@@ -21,3 +19,8 @@ torchvision = { index = "pytorch-cpu" }
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
+
+[tool.mypy]
+[[tool.mypy.overrides]]
+module = "llm_sdk.*"
+ignore_missing_imports = true

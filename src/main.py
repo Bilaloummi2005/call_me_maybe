@@ -17,7 +17,9 @@ class JsonGenerater:
             self.llm = Small_LLM_Model()
         except Exception as e:
             raise RuntimeError(f"Failed to load LLM model: {e}") from e
-        self.fun_def_path, self.prompt_path, self.output_file = self.parse_arguments()
+        self.fun_def_path, self.prompt_path, self.output_file = (
+            self.parse_arguments()
+        )
         self.funcs, self.funcs_description = self.get_funcs()
         self.functions_name = list(self.funcs.keys())
         self.prompts = self.get_prompts()
@@ -27,11 +29,17 @@ class JsonGenerater:
             with open(self.prompt_path) as file_obj:
                 content: list[dict[str, Any]] = json.load(file_obj)
         except FileNotFoundError:
-            raise FileNotFoundError(f"Prompts file not found: '{self.prompt_path}'")
+            raise FileNotFoundError(
+                f"Prompts file not found: '{self.prompt_path}'"
+            )
         except PermissionError:
-            raise PermissionError(f"Permission denied reading: '{self.prompt_path}'")
+            raise PermissionError(
+                f"Permission denied reading: '{self.prompt_path}'"
+            )
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in '{self.prompt_path}': {e}") from e
+            raise ValueError(
+                f"Invalid JSON in '{self.prompt_path}': {e}"
+            ) from e
 
         prompts: list[str] = []
         for i, prompt in enumerate(content):
@@ -72,11 +80,17 @@ class JsonGenerater:
             with open(self.fun_def_path) as file_obj:
                 content: list[dict[str, Any]] = json.load(file_obj)
         except FileNotFoundError:
-            raise FileNotFoundError(f"Functions definition file not found: '{self.fun_def_path}'")
+            raise FileNotFoundError(
+                f"Functions definition file not found: '{self.fun_def_path}'"
+            )
         except PermissionError:
-            raise PermissionError(f"Permission denied reading: '{self.fun_def_path}'")
+            raise PermissionError(
+                f"Permission denied reading: '{self.fun_def_path}'"
+            )
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in '{self.fun_def_path}': {e}") from e
+            raise ValueError(
+                f"Invalid JSON in '{self.fun_def_path}': {e}"
+            ) from e
 
         funcs: dict[str, FunctionDef] = {}
         funcs_description = ""
@@ -86,10 +100,14 @@ class JsonGenerater:
                 funcs_description += func_def.fun_description()
                 funcs[func_def.name] = func_def
             except ValidationError as e:
-                raise ValueError(f"Invalid function definition at index {i}: {e}") from e
+                raise ValueError(
+                    f"Invalid function definition at index {i}: {e}"
+                ) from e
 
         if not funcs:
-            raise ValueError(f"No function definitions found in '{self.fun_def_path}'")
+            raise ValueError(
+                f"No function definitions found in '{self.fun_def_path}'"
+            )
 
         return funcs, funcs_description
 
@@ -117,7 +135,9 @@ JSON:
                 decode = Decoder(self.llm, ids, self.funcs)
                 decode.decode(p, self.functions_name)
             except DecoderError as e:
-                errors.append(f"Prompt {i} ('{p[:40]}'): decoder error: {e}")
+                errors.append(
+                    f"Prompt {i} ('{p[:40]}'): decoder error: {e}"
+                )
                 continue
 
             try:
@@ -133,16 +153,23 @@ JSON:
                 parsed = json.loads(raw)
                 if not isinstance(parsed, dict):
                     errors.append(
-                        f"Prompt {i+1} ('{p[:40]}'): invalid function call output: not a JSON object"
+                        f"Prompt {i+1} ('{p[:40]}'): "
+                        "invalid function call output: not a JSON object"
                     )
                     continue
                 FunctionCall.model_validate(parsed)
-                
+
                 json_output.append(parsed)
             except ValidationError as e:
-                errors.append(f"Prompt {i} ('{p[:40]}'): invalid function call output: {e}")
+                errors.append(
+                    f"Prompt {i} ('{p[:40]}'): "
+                    f"invalid function call output: {e}"
+                )
             except Exception as e:
-                errors.append(f"Prompt {i} ('{p[:40]}'): failed to parse output: {e}")
+                errors.append(
+                    f"Prompt {i} ('{p[:40]}'): "
+                    f"failed to parse output: {e}"
+                )
 
         if errors:
             print(f"\n{len(errors)} prompt(s) failed:", file=sys.stderr)
@@ -154,12 +181,16 @@ JSON:
             with open(self.output_file, "w") as f:
                 json.dump(json_output, f, indent=4)
         except PermissionError:
-            raise PermissionError(f"Permission denied writing to: '{self.output_file}'")
+            raise PermissionError(
+                f"Permission denied writing to: '{self.output_file}'"
+            )
         except OSError as e:
-            raise OSError(f"Failed to write output to '{self.output_file}': {e}") from e
+            raise OSError(
+                f"Failed to write output to '{self.output_file}': {e}"
+            ) from e
 
 
-def main():
+def main() -> None:
     try:
         gen = JsonGenerater()
         gen.generate()

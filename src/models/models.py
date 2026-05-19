@@ -1,8 +1,10 @@
 from pydantic import BaseModel
 from typing import Any, Optional
 
+
 class ParameterSchema(BaseModel):
     type: str
+
 
 class FunctionDef(BaseModel):
     name: str
@@ -32,8 +34,10 @@ class FunctionDef(BaseModel):
             return output + ")"
         return output[:-2] + ')\n'
 
+
 class TestPrompt(BaseModel):
     prompt: str
+
 
 class FunctionCall(BaseModel):
     prompt: str
